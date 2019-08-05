@@ -3,12 +3,28 @@ import threading
 import logging
 import datetime
 import time
-import benchmark
+from metadata import model_zoos, model_zoo_models
+import zoo_compile
 
 def worker(b):
-    
+    # target logic need to be added
+    target = 'c5'
+    for model_zoo_name in model_zoos:
+        logging.info("start model zoo: %s" % (model_zoo_name))
+        for model_name in model_zoo_models[model_zoo_name]:
+            logging.info("start model: %s" % (model_name))
+            compiler = zoo_compile.zoo_compilers[model_zoo_name](model_name, target, '', False)
+            try:
+                quantized_compiler = zoo_compile.zoo_compilers[model_zoo_name](model_name, target, '', True)
+            except:
+                logging.info('quantization failed for %s %s' % (model_zoo_name, model_name))
+            # original model compilation
+            graph, lib, params = compiler.compile()
+
+
+
     b.wait()
-    print('done', sleeptime)
+    print('done')
 
 def main():
     # since we are not targeting on multiple insance type here, the argument is not useful now
