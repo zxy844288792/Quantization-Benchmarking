@@ -5,6 +5,7 @@ import datetime
 import time
 from metadata import model_zoos, model_zoo_models
 import zoo_compile
+import zoo_runtime
 
 def worker(b):
     # target logic need to be added
@@ -16,13 +17,22 @@ def worker(b):
             compiler = zoo_compile.zoo_compilers[model_zoo_name](model_name, target, '', False)
             try:
                 quantized_compiler = zoo_compile.zoo_compilers[model_zoo_name](model_name, target, '', True)
+                logging.info('quantization succeed for %s %s' % (model_zoo_name, model_name))
             except:
                 logging.info('quantization failed for %s %s' % (model_zoo_name, model_name))
             # original model compilation
             graph, lib, params = compiler.compile()
 
+            # original model evaluation
+            runtime = zoo_runtime.zoo_runtimes[model_zoo_name](model_name, graph, lib, params)
+            acc1, acc5 = runtime.evaluate() 
+            logging.info('original %s %s top1: %f top5: %f' % (model_zoo_name, model_name, acc1, acc5))
 
+            # quantized model compilation
+            graph, lib, params = quantized_compiler.compile()
 
+            # quantized mode levaluation
+            runtime = zoo_runtime.zoo_runtimes[model_zoo_name](model_name, graph, lib, params)
     b.wait()
     print('done')
 
