@@ -20,6 +20,7 @@ def worker(b):
                 logging.info('quantization succeed for %s %s' % (model_zoo_name, model_name))
             except:
                 logging.info('quantization failed for %s %s' % (model_zoo_name, model_name))
+                continue
             # original model compilation
             graph, lib, params = compiler.compile()
 

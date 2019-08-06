@@ -12,6 +12,7 @@ model_zoo_models['gluon_image_classifier'] = {
     'resnet18_v1': 'resnet18_v1', 
     'resnet34_v1': 'resnet34_v1',
     'mobilenet1.0': 'mobilenet1.0',
+    'vgg11': 'vgg11',
 }
 
 model_zoo_models['tf_image_classifier']['resnet50_v1'] = 'resnet_v1_50'
