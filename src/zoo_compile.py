@@ -21,7 +21,10 @@ class ZooCompiler:
         self.target = TARGET_MAP[target]
         self.quantized = quantized
 
-    def compile(self, s3_bucket, backend='TVM'):
+    def compile(self):
+        return compile_model_tvm(self.mod, self.params, self.target, self.quantized)
+    
+    def load(self):
         pass
 
 class GluonImageClassifierCompiler(ZooCompiler):
@@ -41,23 +44,54 @@ class GluonImageClassifierCompiler(ZooCompiler):
             self.height,
             self.width,
         ]
-        print(self.zoo)
-        print(model_name)
         self.model_key = model_zoo_models[self.zoo][model_name]
-        from mxnet.gluon.model_zoo import vision
-        model = vision.get_model(self.model_key,pretrained=True)
         self.input_shape = {"data": self.input_shape}
+        self.mod, self.params = self.load_model()
         from tvm import relay
-        self.mod, self.params = relay.frontend.from_mxnet(model, shape=self.input_shape)
         if self.quantized:
             func = self.mod['main']
             self.mod = relay.quantize.quantize(func,params=self.params)
-    
-    def compile(self):
-        return compile_model_tvm(self.mod, self.params, self.target, self.quantized)
+ 
+    def load_model(self):
+        from mxnet.gluon.model_zoo import vision
+        model = vision.get_model(self.model_key,pretrained=True)
+        from tvm import relay
+        return relay.frontend.from_mxnet(model, shape=self.input_shape)
 
+
+class TFImageClassifierCompiler(ZooCompiler):
+    def __init__(self, model_name, target, local_path, quantized):
+        super(TFImageClassifierCompiler, self).__init__(model_name,
+                                                              target,
+                                                              local_path,
+                                                              quantized)
+        self.zoo = 'tf_image_classifier'
+        self.channels = 3
+        self.height, self.width, self.input_name = zoo_metadata[self.zoo][model_name]
+        self.input_shape = [
+            1,
+            self.height,
+            self.width,
+            self.channels,
+        ]
+        self.model_key = model_zoo_models[self.zoo][model_name]
+        self.input_shape = {self.input_name: self.input_shape}
+        # load model
+        self.mod, self.params = self.load_model()
+        from tvm import relay
+        if self.quantized:
+            func = self.mod['main']
+            self.mod = relay.quantize.quantize(func,params=self.params)
+
+    def load_model(self):
+        # TODO path
+        from tvm.relay.frontend.tensorflow_parser import TFParser
+        model_path = '/home/ubuntu/tf/'+self.model_key+'_frozen.pb'
+        tf_graph = TFParser(model_path).parse()
+        from tvm import relay
+        return relay.frontend.from_tensorflow(tf_graph, layout='NCHW', shape=self.input_shape)
 
 zoo_compilers = {
     'gluon_image_classifier': GluonImageClassifierCompiler,
-    #'tf_imagenet_classifier': TFImageNetClassifierCompiler,
+    'tf_image_classifier': TFImageClassifierCompiler,
 }

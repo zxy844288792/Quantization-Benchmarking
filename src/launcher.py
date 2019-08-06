@@ -23,16 +23,26 @@ def worker(b):
             # original model compilation
             graph, lib, params = compiler.compile()
 
-            # original model evaluation
+            # original model performance
             runtime = zoo_runtime.zoo_runtimes[model_zoo_name](model_name, graph, lib, params)
+            latency = runtime.performance(20, 100)
+            logging.info('original %s %s latency: %f' % (model_zoo_name, model_name, latency))
+
+            # original model evaluation
             acc1, acc5 = runtime.evaluate() 
             logging.info('original %s %s top1: %f top5: %f' % (model_zoo_name, model_name, acc1, acc5))
 
             # quantized model compilation
             graph, lib, params = quantized_compiler.compile()
 
-            # quantized mode levaluation
+            # quantized model performance
             runtime = zoo_runtime.zoo_runtimes[model_zoo_name](model_name, graph, lib, params)
+            latency = runtime.performance(20, 100)
+            logging.info('quantized %s %s latency: %f' % (model_zoo_name, model_name, latency))
+
+            # quantized mode levaluation
+            acc1, acc5 = runtime.evaluate()
+            logging.info('quantized %s %s top1: %f top5: %f' % (model_zoo_name, model_name, acc1, acc5))
     b.wait()
     print('done')
 
