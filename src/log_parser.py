@@ -13,6 +13,10 @@ def email_gen(logfile, region_name):
     dic = defaultdict(dict)
     for model_zoo_name in model_zoos:
         for model_name in model_zoo_models[model_zoo_name]:
+            dic[model_zoo_name][model_zoo_name] = {'quantized performance': '',
+                                                   'original performance': '',
+                                                   'quantized accuracy': '',
+                                                   'original accuracy': '',}
             dic[model_zoo_name][model_name] = {}
 
     with open(logfile, 'r') as log_file:
@@ -42,8 +46,22 @@ def email_gen(logfile, region_name):
                     top5 = line.split()[6]
                     dic[model_zoo_name][model_name][model_type+' accuracy'] = top1 + '/' + top5
 
+    # format the table TOO
 
-    print(dic)
+    import pandas as pd
+    html = ''
+    for model_zoo_name in model_zoos:
+        df = pd.DataFrame(data=dic[model_zoo_name])
+        df = df.fillna(' ').T
+        new_row = pd.DataFrame({'Name':'Geeks', 'Team':'Boston', 'Number':3,
+                        'Position':'PG', 'Age':33, 'Height':'6-2',
+                        'Weight':189, 'College':'MIT', 'Salary':99999},
+                                                            index =[0]) 
+        html += df.to_html()
+    
+    utils.send_email_html('zhoxingy@amazon.com', 'zhoxingy@amazon.com',
+                     'Neo Quantization Report', html)
+
 
 
 def main():
