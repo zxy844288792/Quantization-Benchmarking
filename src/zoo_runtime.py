@@ -140,9 +140,10 @@ class TFImageClassifierRuntime(ZooRuntime):
         self.input_name = zoo_metadata[self.zoo][model_name][2]
         import tvm
         self._model = self.load_tvm_model([tvm.cpu(0)])
-
-    def evaluate(self):
+    
+    def evaluate_2(self):
         import cv2
+        mean_rgb = [123.68, 116.779, 103.939]
         image_path = '/home/ubuntu/.mxnet/datasets/imagenet/val/'
         all_class_path = sorted(glob.glob(image_path+'*'))
         total = 0
@@ -157,13 +158,52 @@ class TFImageClassifierRuntime(ZooRuntime):
                 im = cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
                 im = cv2.resize(im, dsize=(224, 224))
                 im = np.expand_dims(im, axis=0)
+                im = (im / 256 - 0.5) * 2
                 im = im.astype('float32')
+                #tmp = np.zeros(self.input_shape).astype('float32')
+                #im = np.transpose(im, (0,3,1,2))
+                #tmp[0] = im
                 self.load_input(im, self.input_name)
                 out_arr = self.run_tvm().asnumpy()
 
                 if np.argmax(out_arr) == label:
                     top1_score = top1_score + 1
-                if label in np.argsort(out_arr)[0][-5:]:
+                if label in np.argsort(out_arr)[-5:]:
+                    top5_score = top5_score + 1
+                if not total % 1000:
+                    print('[%d samples] validation: acc-top1=%f acc-top5=%f', total, top1_score/total, top5_score/total)
+            label = label + 1
+
+        return top1_score/total, top5_score/total
+
+    def evaluate(self):
+        import cv2
+        mean_rgb = [123.68, 116.779, 103.939]
+        image_path = '/home/ubuntu/.mxnet/datasets/imagenet/val/'
+        all_class_path = sorted(glob.glob(image_path+'*'))
+        total = 0
+        top1_score = 0
+        top5_score = 0
+        label = 0
+        for cur_class in all_class_path:
+            all_image = glob.glob(cur_class+'/*')
+            for image in all_image:
+                total = total + 1
+                im = cv2.imread(image)
+                im = cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
+                im = cv2.resize(im, dsize=(224, 224))
+                im = np.expand_dims(im, axis=0)
+                im = im - np.array(mean_rgb)
+                im = im.astype('float32')
+                #tmp = np.zeros(self.input_shape).astype('float32')
+                #im = np.transpose(im, (0,3,1,2))
+                #tmp[0] = im
+                self.load_input(im, self.input_name)
+                out_arr = self.run_tvm().asnumpy()
+
+                if np.argmax(out_arr) == label:
+                    top1_score = top1_score + 1
+                if label in np.argsort(out_arr)[-5:]:
                     top5_score = top5_score + 1
                 if not total % 1000:
                     print('[%d samples] validation: acc-top1=%f acc-top5=%f', total, top1_score/total, top5_score/total)

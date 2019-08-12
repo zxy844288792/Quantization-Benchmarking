@@ -7,8 +7,8 @@ from metadata import model_zoos, model_zoo_models
 
 def email_gen(logfile, region_name):
     # upload the log file to s3
-    #s3 = boto3.Session(profile_name='trinity').resource('s3', region_name=region_name)
-    #utils.upload_to_s3(s3, 'quantization-benchmark-data', logfile)
+    s3 = boto3.Session(profile_name='trinity').resource('s3', region_name=region_name)
+    utils.upload_to_s3(s3, 'quantization-benchmark-data', logfile)
 
     dic = defaultdict(dict)
     for model_zoo_name in model_zoos:
@@ -53,13 +53,9 @@ def email_gen(logfile, region_name):
     for model_zoo_name in model_zoos:
         df = pd.DataFrame(data=dic[model_zoo_name])
         df = df.fillna(' ').T
-        new_row = pd.DataFrame({'Name':'Geeks', 'Team':'Boston', 'Number':3,
-                        'Position':'PG', 'Age':33, 'Height':'6-2',
-                        'Weight':189, 'College':'MIT', 'Salary':99999},
-                                                            index =[0]) 
         html += df.to_html()
     
-    utils.send_email_html('zhoxingy@amazon.com', 'zhoxingy@amazon.com',
+    utils.send_email_html('neo-quantization@amazon.com', 'neo-quantization@amazon.com',
                      'Neo Quantization Report', html)
 
 

@@ -50,12 +50,16 @@ def worker(b):
 def main():
     # since we are not targeting on multiple insance type here, the argument is not useful now
     parser = ArgumentParser(description='launching quantization benchmark')
+    parser.add_argument('--config_file', type=str, help='name of the config file', required=True)
     parser.add_argument('--region_name', type=str, help='name of region. default: us-west-1',
                         default='us-west-2')
 
     logging.basicConfig(filename='%s.log' % datetime.date.today().strftime("%B_%d_%Y"), level=logging.INFO)
     
     args = parser.parse_args()
+
+    # parse config file
+
 
     b = threading.Barrier(2)
     thread = threading.Thread(target=worker, args=(b,))

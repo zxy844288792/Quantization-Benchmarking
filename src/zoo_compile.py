@@ -49,8 +49,9 @@ class GluonImageClassifierCompiler(ZooCompiler):
         self.mod, self.params = self.load_model()
         from tvm import relay
         if self.quantized:
-            func = self.mod['main']
-            self.mod = relay.quantize.quantize(func,params=self.params)
+            with relay.quantize.qconfig(store_lowbit_output=False):
+                func = self.mod['main']
+                self.mod = relay.quantize.quantize(func,params=self.params)
  
     def load_model(self):
         from mxnet.gluon.model_zoo import vision
@@ -80,13 +81,15 @@ class TFImageClassifierCompiler(ZooCompiler):
         self.mod, self.params = self.load_model()
         from tvm import relay
         if self.quantized:
-            func = self.mod['main']
-            self.mod = relay.quantize.quantize(func,params=self.params)
+            with relay.quantize.qconfig(store_lowbit_output=False):
+                func = self.mod['main']
+                self.mod = relay.quantize.quantize(func,params=self.params)
 
     def load_model(self):
         # TODO path
         from tvm.relay.frontend.tensorflow_parser import TFParser
         model_path = '/home/ubuntu/tf/'+self.model_key+'_frozen.pb'
+        #model_path = '/home/ubuntu/tf/'+self.model_path
         tf_graph = TFParser(model_path).parse()
         from tvm import relay
         return relay.frontend.from_tensorflow(tf_graph, layout='NCHW', shape=self.input_shape)
