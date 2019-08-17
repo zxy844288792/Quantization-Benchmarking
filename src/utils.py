@@ -1,4 +1,19 @@
 # utils.py
+import numpy as np
+
+def post_processing(img):
+    if img.shape[1] is not 1000:
+        return img[:,1:]
+    return img
+
+def crop_center(img, threshold=0.875):
+    y,x,z = img.shape
+    startx = int((x - x * threshold) / 2)
+    starty = int((y - y * threshold) / 2)
+    x_size = x - startx * 2
+    y_size = y - starty * 2
+    return img[starty:starty+y_size,startx:startx+x_size,:]
+
 
 def send_email_html(src, dst, subject, html):
     import boto3

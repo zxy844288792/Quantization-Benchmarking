@@ -68,7 +68,7 @@ class TFImageClassifierCompiler(ZooCompiler):
                                                               quantized)
         self.zoo = 'tf_image_classifier'
         self.channels = 3
-        self.height, self.width, self.input_name = zoo_metadata[self.zoo][model_name]
+        self.height, self.width, self.input_name, self.pre_categoty = zoo_metadata[self.zoo][model_name]
         self.input_shape = [
             1,
             self.height,
