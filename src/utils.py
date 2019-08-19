@@ -2,7 +2,7 @@
 import numpy as np
 
 def post_processing(img):
-    if img.shape[1] is not 1000:
+    if img.shape[1] == 1001:
         return img[:,1:]
     return img
 
@@ -15,12 +15,12 @@ def crop_center(img, threshold=0.875):
     return img[starty:starty+y_size,startx:startx+x_size,:]
 
 
-def send_email_html(src, dst, subject, html):
+def send_email_html(src, dst, subject, html, arn):
     import boto3
     client = boto3.Session(profile_name='trinity', region_name='us-east-1').client('ses')
     client.send_email(
         Source=src,
-        SourceArn='arn:aws:ses:us-east-1:886656810413:identity/%s' % src,
+        SourceArn= arn + ('%s' % src),
         Destination={
             'ToAddresses': [
                 dst,

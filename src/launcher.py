@@ -27,7 +27,7 @@ def worker(b):
             # original model performance
             runtime = zoo_runtime.zoo_runtimes[model_zoo_name](model_name, graph, lib, params)
             latency = runtime.performance(20, 100)
-            logging.info('original %s %s latency: %f' % (model_zoo_name, model_name, latency))
+            logging.info('original %s %s latency: %f' % (model_zoo_name, model_name, latency * 1000))
 
             # original model evaluation
             acc1, acc5 = runtime.evaluate() 
@@ -39,7 +39,7 @@ def worker(b):
             # quantized model performance
             runtime = zoo_runtime.zoo_runtimes[model_zoo_name](model_name, graph, lib, params)
             latency = runtime.performance(20, 100)
-            logging.info('quantized %s %s latency: %f' % (model_zoo_name, model_name, latency))
+            logging.info('quantized %s %s latency: %f' % (model_zoo_name, model_name, latency * 1000))
 
             # quantized mode levaluation
             acc1, acc5 = runtime.evaluate()

@@ -4,8 +4,9 @@ from argparse import ArgumentParser
 from collections import defaultdict
 import utils
 from metadata import model_zoos, model_zoo_models
+import configparser
 
-def email_gen(logfile, region_name):
+def email_gen(logfile, region_name, config):
     # upload the log file to s3
     s3 = boto3.Session(profile_name='trinity').resource('s3', region_name=region_name)
     utils.upload_to_s3(s3, 'quantization-benchmark-data', logfile)
@@ -54,19 +55,22 @@ def email_gen(logfile, region_name):
         df = pd.DataFrame(data=dic[model_zoo_name])
         df = df.fillna(' ').T
         html += df.to_html()
-    
     utils.send_email_html('neo-quantization@amazon.com', 'neo-quantization@amazon.com',
-                     'Neo Quantization Report', html)
+                     'Neo Quantization Report', html, config.get('email', 'ARN'))
 
 
 
 def main():
     parser = ArgumentParser(description='process the log file')
     parser.add_argument('--logfile', type=str, help='file name of log file to be parsed', required=True)
+    parser.add_argument('--config_file', type=str, help='name of the config file', required=True)
     parser.add_argument('--region_name', type=str, help='default region', default='us-east-1')
 
     args = parser.parse_args()
-    email_gen(args.logfile, args.region_name)
+    config = configparser.RawConfigParser()
+    config.read(args.config_file)
+
+    email_gen(args.logfile, args.region_name, config)
 
 if __name__ == '__main__':
     main()
